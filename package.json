@@ -2,7 +2,7 @@
   "name": "ecommerce-nodejs-website",
   "version": "1.0.0",
   "main": "app.js",
-  "description": "A virtual ecommerce website using Node js, Express js, and Mongoose.",
+  "description": "A virtual ecommerce website using Node.js, Express, and Mongoose.",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js"
@@ -10,12 +10,12 @@
   "author": "Maryam Aljanabi",
   "license": "MIT",
   "dependencies": {
-    "admin-bro": "^2.9.0",
-    "admin-bro-expressjs": "^2.1.1",
-    "admin-bro-mongoose": "^0.5.2",
+    "@admin-bro/express": "^3.1.0",
+    "@admin-bro/mongoose": "^1.1.0",
+    "admin-bro": "^4.0.1",
     "bcrypt-nodejs": "0.0.3",
     "connect-flash": "^0.1.1",
-    "connect-mongo": "^3.2.0",
+    "connect-mongo": "^4.6.0",
     "cookie-parser": "^1.4.6",
     "csurf": "^1.11.0",
     "debug": "~2.6.9",
@@ -40,7 +40,6 @@
     "passport-local": "^1.0.0",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
-    "session": "^0.1.0",
     "slugify": "^1.6.5",
     "stripe": "^8.219.0",
     "styled-components": "^5.3.5"

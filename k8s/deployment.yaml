@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bestbags
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: bestbags
+  template:
+    metadata:
+      labels:
+        app: bestbags
+    spec:
+      containers:
+        - name: bestbags
+          image: 713881797197.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ecr:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: MONGO_URI
+              value: mongodb://mongodb-service:27017/bags-ecommerce
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: session-secret
+                  key: SESSION_SECRET
+            - name: STRIPE_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: stripe-secret
+                  key: STRIPE_PRIVATE_KEY
+            - name: ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_EMAIL
+            - name: ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_PASSWORD
+            - name: ADMIN_COOKIE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_COOKIE_NAME
+            - name: ADMIN_COOKIE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: admin-secret
+                  key: ADMIN_COOKIE_PASSWORD
