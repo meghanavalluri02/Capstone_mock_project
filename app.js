@@ -48,6 +48,25 @@ app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use((req, res, next) => {
+  res.locals.session = req.session;     
+  res.locals.login = req.session.isLoggedIn || false;   // makes login status available
+  next();
+});
+const Category = require('./models/category');
+
+app.use(async (req, res, next) => {
+  try {
+    const categories = await Category.find({});
+    res.locals.categories = categories;
+    next();
+  } catch (err) {
+    console.error('Failed to load categories:', err);
+    res.locals.categories = []; // fallback to avoid breaking templates
+    next();
+  }
+});
+
 // AdminBro Setup
 AdminBro.registerAdapter(AdminBroMongoose);
 const adminBro = new AdminBro({
