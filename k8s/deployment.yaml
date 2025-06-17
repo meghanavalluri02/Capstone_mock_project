@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: bestbags
-          image: 713881797197.dkr.ecr.us-east-1.amazonaws.com/ecommerce-ecr:latest
+          image: IMAGE_PLACEHOLDER
           ports:
             - containerPort: 3000
           env:
