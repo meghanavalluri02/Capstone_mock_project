@@ -1,13 +1,13 @@
 version: 0.2
- 
+
 phases:
   install:
     runtime-versions:
-      nodejs: 18
+      nodejs: 18  # or 16 or 20 depending on your project needs
     commands:
       - echo Installing Node.js dependencies...
       - npm install
- 
+
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -16,32 +16,24 @@ phases:
       - REPO_NAME=ecommerce-ecr
       - IMAGE_TAG=latest
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
- 
+
   build:
     commands:
       - echo Building Docker image...
       - docker build -t ${REPO_NAME}:${IMAGE_TAG} .
       - docker tag ${REPO_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-      - echo Preparing Kubernetes manifests...
-      - mkdir -p k8s-out
-      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
-      - cp k8s/service.yaml k8s-out/service.yaml
-      - cp k8s/mongodb-deployment.yaml k8s-out/mongodb-deployment.yaml
-      - cp k8s/mongodb-service.yaml k8s-out/mongodb-service.yaml
-      - cp k8s/secrets.yaml k8s-out/secrets.yaml
-      - ls -R k8s-out
- 
+
   post_build:
     commands:
       - echo Pushing Docker image to Amazon ECR...
       - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-      - echo Updating kubeconfig for EKS...
-      - aws eks update-kubeconfig --region $REGION --name eks-cluster-1
-      - echo Applying Kubernetes secrets...
-      - kubectl apply -f k8s-out/secrets.yaml
-      - echo Applying application and MongoDB manifests...
-      - kubectl apply -f k8s-out/
- 
+      - echo Creating final deployment files...
+      - mkdir -p k8s-out
+      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
+      - cp k8s/service.yaml k8s-out/service.yaml
+      - cp k8s/mongodb-*.yaml k8s-out/
+      - ls -R k8s-out
+
 artifacts:
   base-directory: k8s-out
   files:
@@ -49,4 +41,3 @@ artifacts:
     - service.yaml
     - mongodb-deployment.yaml
     - mongodb-service.yaml
-    - secrets.yaml
