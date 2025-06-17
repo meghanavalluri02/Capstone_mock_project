@@ -4,13 +4,10 @@ phases:
   install:
     runtime-versions:
       java: corretto11
+      docker: 20
     commands:
-      - echo Installing kubectl...
-      - curl -LO "https://s3.us-east-1.amazonaws.com/amazon-eks/1.27.0/2023-11-14/bin/linux/amd64/kubectl"
-      - chmod +x kubectl
-      - mv kubectl /usr/local/bin/
-      - echo Configuring kubeconfig for EKS cluster...
-      - aws eks update-kubeconfig --region us-east-1 --name eks-cluster-three-tier-1
+      - echo Installing dependencies...
+      - yum install -y jq maven
 
   pre_build:
     commands:
@@ -23,7 +20,7 @@ phases:
 
   build:
     commands:
-      - echo Building the JAR file with Maven...
+      - echo Building the JAR file...
       - mvn clean install
       - echo Building Docker image...
       - docker build -t ${REPO_NAME}:${IMAGE_TAG} .
@@ -31,13 +28,20 @@ phases:
 
   post_build:
     commands:
-      - echo Pushing Docker image to ECR...
+      - echo Pushing Docker image to Amazon ECR...
       - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-      - echo Deploying to EKS...
-      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml | kubectl apply -f -
-      - kubectl apply -f k8s/service.yaml
-      - kubectl apply -f k8s/mongodb-deployment.yaml
-      - kubectl apply -f k8s/mongodb-service.yaml
+      - echo Creating final deployment files...
+      - mkdir -p k8s-out
+      - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
+      - cp k8s/service.yaml k8s-out/service.yaml
+      - cp k8s/mongodb-deployment.yaml k8s-out/mongodb-deployment.yaml
+      - cp k8s/mongodb-service.yaml k8s-out/mongodb-service.yaml
+      - ls -R
 
 artifacts:
-  files: []
+  base-directory: k8s-out
+  files:
+    - deployment.yaml
+    - service.yaml
+    - mongodb-deployment.yaml
+    - mongodb-service.yaml
