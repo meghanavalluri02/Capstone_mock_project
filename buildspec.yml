@@ -1,13 +1,21 @@
 version: 0.2
-
+ 
 phases:
   install:
     runtime-versions:
-      nodejs: 18  # or 16 or 20 depending on your project needs
+      nodejs: 18
     commands:
-      - echo Installing Node.js dependencies...
+      - echo Installing dependencies...
       - npm install
-
+      - echo Installing kubectl...
+      - curl -o kubectl https://s3.us-east-1.amazonaws.com/amazon-eks/1.27.7/2023-11-17/bin/linux/amd64/kubectl
+      - chmod +x ./kubectl
+      - mv ./kubectl /usr/local/bin
+      - echo Installing aws-iam-authenticator...
+      - curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.27.7/2023-11-17/bin/linux/amd64/aws-iam-authenticator
+      - chmod +x aws-iam-authenticator
+      - mv aws-iam-authenticator /usr/local/bin/
+ 
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -16,24 +24,27 @@ phases:
       - REPO_NAME=ecommerce-ecr
       - IMAGE_TAG=latest
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-
+ 
   build:
     commands:
       - echo Building Docker image...
       - docker build -t ${REPO_NAME}:${IMAGE_TAG} .
       - docker tag ${REPO_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-
-  post_build:
-    commands:
       - echo Pushing Docker image to Amazon ECR...
       - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
-      - echo Creating final deployment files...
+      - echo Replacing image placeholder in deployment.yaml...
       - mkdir -p k8s-out
       - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
       - cp k8s/service.yaml k8s-out/service.yaml
       - cp k8s/mongodb-*.yaml k8s-out/
-      - ls -R k8s-out
-
+ 
+  post_build:
+    commands:
+      - echo Setting up kubeconfig...
+      - aws eks update-kubeconfig --region $REGION --name eks-cluster-1
+      - echo Applying Kubernetes manifests...
+      - kubectl apply -f k8s-out/
+ 
 artifacts:
   base-directory: k8s-out
   files:
