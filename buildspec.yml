@@ -3,10 +3,10 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: corretto11
+      nodejs: 18  # or 16 or 20 depending on your project needs
     commands:
-      - echo Installing dependencies...
-      - yum install -y jq maven
+      - echo Installing Node.js dependencies...
+      - npm install
 
   pre_build:
     commands:
@@ -19,8 +19,6 @@ phases:
 
   build:
     commands:
-      - echo Building the JAR file...
-      - mvn clean install
       - echo Building Docker image...
       - docker build -t ${REPO_NAME}:${IMAGE_TAG} .
       - docker tag ${REPO_NAME}:${IMAGE_TAG} ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
@@ -33,9 +31,8 @@ phases:
       - mkdir -p k8s-out
       - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
       - cp k8s/service.yaml k8s-out/service.yaml
-      - cp k8s/mongodb-deployment.yaml k8s-out/mongodb-deployment.yaml
-      - cp k8s/mongodb-service.yaml k8s-out/mongodb-service.yaml
-      - ls -R
+      - cp k8s/mongodb-*.yaml k8s-out/
+      - ls -R k8s-out
 
 artifacts:
   base-directory: k8s-out
