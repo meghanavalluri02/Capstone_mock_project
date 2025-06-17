@@ -11,7 +11,7 @@ phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - ACCOUNT_ID=713881797197
+      - ACCOUNT_ID=156041402660
       - REGION=us-east-1
       - REPO_NAME=ecommerce-ecr
       - IMAGE_TAG=latest
