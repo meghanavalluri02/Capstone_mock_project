@@ -3,13 +3,26 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18  # or 16 or 20 depending on your project needs
+      nodejs: 18
     commands:
       - echo Installing Node.js dependencies...
       - npm install
+      - echo Installing SonarScanner CLI...
+      - curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+      - unzip sonar-scanner.zip
+      - mv sonar-scanner-* sonar-scanner
+      - export PATH=$PATH:$(pwd)/sonar-scanner/bin
 
   pre_build:
     commands:
+      - echo Adding SonarScanner to PATH...
+      - export PATH=$PATH:$(pwd)/sonar-scanner/bin
+      - echo Running SonarQube analysis...
+      - sonar-scanner \
+          -Dsonar.projectKey=capstone_mock \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=http://54.205.165.18 \
+          -Dsonar.login=sqp_79d61fffdc017bc50da8bb84a04b422e3d44bd19
       - echo Logging in to Amazon ECR...
       - ACCOUNT_ID=156041402660
       - REGION=us-east-1
