@@ -1,5 +1,15 @@
 version: 0.2
 
+env:
+  variables:
+    ACCOUNT_ID: "156041402660"
+    REGION: "us-east-1"
+    REPO_NAME: "ecommerce-ecr"
+    IMAGE_TAG: "latest"
+    SONAR_PROJECT_KEY: "capstone_mock"
+    SONAR_HOST_URL: "http://54.205.165.18"
+    SONAR_TOKEN: "sqp_79d61fffdc017bc50da8bb84a04b422e3d44bd19"
+
 phases:
   install:
     runtime-versions:
@@ -18,16 +28,8 @@ phases:
       - echo Adding SonarScanner to PATH...
       - export PATH=$PATH:$(pwd)/sonar-scanner/bin
       - echo Running SonarQube analysis...
-      - sonar-scanner \
-          -Dsonar.projectKey=capstone_mock \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=http://54.205.165.18 \
-          -Dsonar.login=sqp_79d61fffdc017bc50da8bb84a04b422e3d44bd19
+      - sonar-scanner -Dsonar.projectKey=$SONAR_PROJECT_KEY -Dsonar.sources=. -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
       - echo Logging in to Amazon ECR...
-      - ACCOUNT_ID=156041402660
-      - REGION=us-east-1
-      - REPO_NAME=ecommerce-ecr
-      - IMAGE_TAG=latest
       - aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 
   build:
@@ -38,13 +40,18 @@ phases:
 
   post_build:
     commands:
+      - set -e
       - echo Pushing Docker image to Amazon ECR...
       - docker push ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}
       - echo Creating final deployment files...
       - mkdir -p k8s-out
+      - echo "--- Checking k8s directory structure ---"
+      - ls -l k8s
       - sed "s|IMAGE_PLACEHOLDER|${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${REPO_NAME}:${IMAGE_TAG}|g" k8s/deployment.yaml > k8s-out/deployment.yaml
       - cp k8s/service.yaml k8s-out/service.yaml
-      - cp k8s/mongodb-*.yaml k8s-out/
+      - cp k8s/mongodb-deployment.yaml k8s-out/mongodb-deployment.yaml
+      - cp k8s/mongodb-service.yaml k8s-out/mongodb-service.yaml
+      - echo "--- Contents of k8s-out ---"
       - ls -R k8s-out
 
 artifacts:
